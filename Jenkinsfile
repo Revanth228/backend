@@ -10,8 +10,9 @@ pipeline {
         }
         stage('Test') {
             steps {
-               echo 'This is Test stage'
-               ls -ltr
+              sh  """
+                ls -ltr
+               """
             }
         }
         stage('Deploy') {
