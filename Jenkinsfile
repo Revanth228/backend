@@ -3,24 +3,26 @@ pipeline {
         label 'AGENT-1'
     }
     stages {
+
+        stage('Read the version')
+        {
+            steps{
+                def packageJson = readJSON file: 'package.json'
+                def appVersion = packageJson.version
+
+                echo "application version is $appVersion"
+            }
+        }
         stage('Install dependencies') {
             steps {
                 sh  """
                 npm install
-               """
-            }
-        }
-        stage('Test') {
-            steps {
-              sh  """
                 ls -ltr
+                echo "application version is $appVersion"
                """
             }
         }
-        stage('Deploy') {
-            steps {
-                echo 'This is Deploy stage'
-            }
-        }
+        
+        
     }
 }
