@@ -3,9 +3,11 @@ pipeline {
         label 'AGENT-1'
     }
     stages {
-        stage('Build') {
+        stage('Install dependencies') {
             steps {
-                echo 'This is Build'
+                sh  """
+                npm install
+               """
             }
         }
         stage('Test') {
