@@ -2,89 +2,79 @@ pipeline {
     agent {
         label 'AGENT-1'
     }
-    environment{
-        def appVersion = ''   //variable declaration
+    environment {
         nexusUrl = 'nexus.daws78s-rev.online:8081'
-
     }
     stages {
+        stage('Read the version') {
+            steps {
+                script {
+                    def packageJson = readJSON file: 'package.json'
+                    env.appVersion = packageJson.version  // Use `env` to set global variables
 
-        stage('Read the version')
-        {
-            steps{
-                script{
-                def packageJson = readJSON file: 'package.json'
-                appVersion = packageJson.version
-
-                echo "application version is $appVersion"
+                    echo "Application version is ${env.appVersion}"
                 }
             }
         }
+
         stage('Install dependencies') {
             steps {
-                sh  """
-                npm install
-                ls -ltr
-                echo "application version is $appVersion"
-
-               """
+                sh """
+                    npm install
+                    ls -ltr
+                    echo "Application version is ${env.appVersion}"
+                """
             }
         }
+
         stage('Build') {
             steps {
-                sh  """
-                zip -q -r backend-${appVersion}.zip * -x jenkinsfile -x backend-${appVersion}.zip
-                ls -ltr
-               """
+                sh """
+                    zip -q -r backend-${env.appVersion}.zip * -x Jenkinsfile -x backend-${env.appVersion}.zip
+                    ls -ltr
+                """
             }
         }
 
-         stage('Nexus Artifact Upload') {
+        stage('Nexus Artifact Upload') {
             steps {
-                script{
+                script {
                     nexusArtifactUploader(
-        nexusVersion: 'nexus3',
-        protocol: 'http',
-        nexusUrl: "${nexusUrl}",
-        
-        groupId: 'com.expense',
-        version: "${appVersion}",
-        repository: "backend",
-        credentialsId: 'nexus-auth',
-        artifacts: [
-            [artifactId: "backend",
-             classifier: '',
-             file: "backend-"+"${appVersion}"  + '.zip',
-             type: 'zip']
-        ]
-     )
+                        nexusVersion: 'nexus3',
+                        protocol: 'http',
+                        nexusUrl: "${nexusUrl}",
+                        groupId: 'com.expense',
+                        version: "${env.appVersion}",
+                        repository: "backend",
+                        credentialsId: 'nexus-auth',
+                        artifacts: [
+                            [
+                                artifactId: "backend",
+                                classifier: '',
+                                file: "backend-${env.appVersion}.zip",
+                                type: 'zip'
+                            ]
+                        ]
+                    )
                 }
             }
         }
 
-
-        stage('Deploy'){
-            steps{
-                def params = [
-                    string(name: 'appVersion', value: "${appVersion}")
-                ]
-                script{
-                    steps{
-                        
-                       build job: "backend-deploy" , parameters:params, wait: false
-
-                    }
+        stage('Deploy') {
+            steps {
+                script {
+                    def params = [
+                        string(name: 'appVersion', value: "${env.appVersion}")
+                    ]
+                    build job: "backend-deploy", parameters: params, wait: false
                 }
             }
         }
-        
     }
+
     post {
-    always {
-       
-          deleteDir()
+        always {
+            deleteDir()
+        }
     }
-}
-
-
 }
