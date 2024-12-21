@@ -44,8 +44,8 @@ pipeline {
                 script{
                     nexusArtifactUploader(
         nexusVersion: 'nexus3',
-        nexusUrl: "${nexusUrl}"
         protocol: 'http',
+        nexusUrl: "${nexusUrl}",
         
         groupId: 'com.expense',
         version: "${appVersion}",
